@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  nats-server:
+    image: nats:latest
+    ports:
+      - '8222:8222'
+
+  #~> Client Gateway Microservice
+  client_gateway:
+    build: ./client_gateway
+    volumes:
+      - ./client_gateway/src:/usr/src/app/src
+    command: npm run start:dev
+    ports:
+      - ${CLIENT_GATEWAY_DOCKER_PORT}:${CLIENT_GATEWAY_MS_PORT}
+    environment:
+      - PORT=${CLIENT_GATEWAY_MS_PORT}
+      - NATS_SERVERS=${NATS_SERVERS}
+
+  #~> Auth Microservice
+  auth_microservice:
+    build: ./auth_microservice
+    volumes:
+      - ./auth_microservice/src:/usr/src/app/src
+    command: npm run start:dev
+    environment:
+      - PORT=${AUTH_MS_PORT}
+      - NATS_SERVERS=${NATS_SERVERS}
+      - DATABASE_URL=${AUTH_DATABASE_URL}
+      - JWT_SECRET=${AUTH_JWT_SECRET}
+
+  # #~> QR Microservice
+  # qr_microservice:
+  #   depends_on:
+  #     - qrs-db
+  #   build: ./qr_microservice
+  #   volumes:
+  #     - ./qr_microservice/src:/usr/src/app/src
+  #   command: npm run start:dev
+  #   environment:
+  #     - PORT=${QR_MS_PORT}
+  #     - DATABASE_URL=${QR_DATABASE_URL}
+  #     - NATS_SERVERS=${NATS_SERVERS}
+
+  # #~> QR Database
+  # qrs-db:
+  #   container_name: qr_database
+  #   image: postgres:latest
+  #   restart: always
+  #   volumes:
+  #     - ./qr_microservice/postgres:/var/lib/postgresql/data
+  #   environment:
+  #     - POSTGRES_USER=${QR_DB_USER}
+  #     - POSTGRES_PASSWORD=${QR_DB_PASSWORD}
+  #     - POSTGRES_DB=${QR_DB_NAME}
