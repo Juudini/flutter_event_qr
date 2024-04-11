@@ -1,14 +1,24 @@
-import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { toString as generateQr } from 'qrcode';
-import { CreateQrDto } from './dto/create-qr.dto';
-import { RpcException } from '@nestjs/microservices';
-import { UpdateQrDto } from './dto/update-qr.dto';
-import { VerifyQrDto } from './dto/verify-qr.dto';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
+
+import { NATS_SERVICE } from 'src/config';
+import { CreateQrDto, UpdateQrDto, VerifyQrDto } from './dto';
 
 @Injectable()
 export class QrsService extends PrismaClient implements OnModuleInit {
   private readonly logger = new Logger('QrsService');
+
+  constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {
+    super();
+  }
 
   onModuleInit() {
     this.$connect();
@@ -16,12 +26,27 @@ export class QrsService extends PrismaClient implements OnModuleInit {
   }
 
   async verifyQr(ids: VerifyQrDto) {
-    const { userId, eventId } = ids;
-    await this.findOne(userId);
-    //Todo: implementar EventService
-    //await this.event(eventId);
+    const { id, userId, eventId } = ids;
+    const qrCode = await this.findOne(id);
 
-    return { payload: { userId, eventId } };
+    //Todo: Add validation for qrCode.userId and qrCode.eventId
+    if (qrCode.userId !== userId) {
+      throw new RpcException({
+        message: `Event QR with id #${id} not valid`,
+        status: HttpStatus.BAD_REQUEST,
+      });
+    }
+
+    const eventData: any = await this.client.send('find.event.by.id', eventId);
+
+    if (eventData?.eventId !== eventId) {
+      throw new RpcException({
+        message: `Event QR with id #${id} not valid`,
+        status: HttpStatus.BAD_REQUEST,
+      });
+    }
+
+    return { payload: { userId, eventId, eventData } };
   }
 
   async create(createQrDto: CreateQrDto) {
