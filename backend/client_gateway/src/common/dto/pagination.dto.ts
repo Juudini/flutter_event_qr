@@ -21,5 +21,5 @@ export class PaginationDto {
 
   @IsOptional()
   @IsEnum(SortType)
-  sort?: Sort;
+  sort?: Sort = 'asc';
 }

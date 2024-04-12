@@ -1,7 +1,8 @@
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { QrsService } from './qr.service';
-import { CreateQrDto, UpdateQrDto, VerifyQrDto } from './dto';
+import { CreateQrDto, VerifyQrDto } from './dto';
 import { Controller } from '@nestjs/common';
+import { PaginationDto } from 'src/common';
 
 @Controller('qr')
 export class QrController {
@@ -13,13 +14,13 @@ export class QrController {
   }
 
   @MessagePattern('find.qrs.by.id')
-  findAllById(@Payload() id: string) {
-    return this.qrService.findAllById(id);
+  findAllById(@Payload() paginationDto: PaginationDto) {
+    return this.qrService.findAllById(paginationDto);
   }
 
-  @MessagePattern('update.qr')
-  update(@Payload() updateQrDto: UpdateQrDto, id: string) {
-    return this.qrService.update(id, updateQrDto);
+  @MessagePattern('find.qr')
+  findById(@Payload() id: string) {
+    return this.qrService.findOne(id);
   }
 
   @MessagePattern('remove.qr')
