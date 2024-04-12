@@ -2,8 +2,9 @@ import { Controller } from '@nestjs/common';
 import { EventService } from './event.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CreateEventDto, UpdateEventDto } from './dto';
+import { PaginationDto } from 'src/common';
 
-@Controller()
+@Controller('event')
 export class EventController {
   constructor(private readonly eventService: EventService) {}
 
@@ -13,8 +14,13 @@ export class EventController {
   }
 
   @MessagePattern('find.all.events')
-  findAllById(@Payload() id: string) {
-    return this.eventService.findAllById(id);
+  findAllById(@Payload() paginationDto: PaginationDto) {
+    return this.eventService.findAllById(paginationDto);
+  }
+
+  @MessagePattern('find.event')
+  findById(@Payload() id: string) {
+    return this.eventService.findOne(id);
   }
 
   @MessagePattern('update.event')

@@ -1,4 +1,4 @@
-import { IsDate, IsString, IsUUID } from 'class-validator';
+import { IsDateString, IsString, IsUUID } from 'class-validator';
 
 export class CreateEventDto {
   @IsString()
@@ -7,7 +7,7 @@ export class CreateEventDto {
   @IsString()
   description: string;
 
-  @IsDate()
+  @IsDateString()
   date: Date;
 
   @IsString()
