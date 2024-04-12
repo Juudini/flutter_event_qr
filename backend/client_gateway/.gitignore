@@ -4,7 +4,7 @@
 /build
 package-lock.json
 pnpm-lock.yaml
-
+/postgres
 # Logs
 logs
 *.log
