@@ -13,6 +13,9 @@ $ cd flutter_event_qr/backend
 
 # up docker's
 $ docker compose up --build
+
+# up NATS server
+$ docker run -d --name nats-server -p 4222:4222 -p 8222:8222 nats
 ```
 
 Make sure you have the `.env` file in the root folder.
