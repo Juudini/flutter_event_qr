@@ -34,7 +34,7 @@ export class EventController {
     @Param('id', ParseUUIDPipe) id: string,
     @Query() paginationDto: PaginationDto,
   ) {
-    return this.client.send('find.all.events', { id, ...paginationDto }).pipe(
+    return this.client.send('find.events.by.id', { id, ...paginationDto }).pipe(
       catchError(err => {
         throw new RpcException(err);
       }),
@@ -43,7 +43,7 @@ export class EventController {
 
   @Get('id/:id')
   findById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.client.send('find.event', { id }).pipe(
+    return this.client.send('find.event', id).pipe(
       catchError(err => {
         throw new RpcException(err);
       }),
@@ -64,7 +64,7 @@ export class EventController {
 
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.client.send('remove.event', { id }).pipe(
+    return this.client.send('remove.event', id).pipe(
       catchError(err => {
         throw new RpcException(err);
       }),
