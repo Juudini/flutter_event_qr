@@ -17,7 +17,7 @@ export class PaginationDto {
   @IsUUID()
   @IsOptional()
   @IsString()
-  id: string;
+  id?: string;
 
   @IsPositive()
   @IsOptional()
@@ -31,5 +31,5 @@ export class PaginationDto {
 
   @IsOptional()
   @IsEnum(SortType)
-  sort?: Sort;
+  sort?: Sort = 'asc';
 }

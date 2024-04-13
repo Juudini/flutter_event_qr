@@ -13,7 +13,7 @@ export class EventController {
     return this.eventService.create(createEventDto);
   }
 
-  @MessagePattern('find.all.events')
+  @MessagePattern('find.events.by.id')
   findAllById(@Payload() paginationDto: PaginationDto) {
     return this.eventService.findAllById(paginationDto);
   }
@@ -24,8 +24,8 @@ export class EventController {
   }
 
   @MessagePattern('update.event')
-  update(@Payload() updateEventDto: UpdateEventDto, id: string) {
-    return this.eventService.update(id, updateEventDto);
+  update(@Payload() updateEventDto: UpdateEventDto) {
+    return this.eventService.update(updateEventDto);
   }
 
   @MessagePattern('remove.event')

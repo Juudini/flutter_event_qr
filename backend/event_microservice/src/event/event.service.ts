@@ -10,14 +10,13 @@ export class EventService extends PrismaClient implements OnModuleInit {
 
   onModuleInit() {
     this.$connect();
-    this.logger.log('PostgreSQL Connected');
+    this.logger.log('📚 Database Connected');
   }
 
   create = async (createEventDto: CreateEventDto) => {
     const { name, description, location, date, userId } = createEventDto;
 
     const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-
     const dateInstance = new Date(date);
 
     try {
@@ -31,11 +30,14 @@ export class EventService extends PrismaClient implements OnModuleInit {
           userId: userId,
         },
       });
-      return newEvent;
+
+      return { status: 'success', payload: [newEvent] };
     } catch (err) {
+      if (err instanceof RpcException) throw err;
+
       throw new RpcException({
-        message: 'Failed to create event. Please try again.',
         status: HttpStatus.BAD_REQUEST,
+        message: 'Something went wrong.',
       });
     }
   };
@@ -48,25 +50,30 @@ export class EventService extends PrismaClient implements OnModuleInit {
 
       if (!isEvent) {
         throw new RpcException({
-          message: `Event with id #${id} not found`,
-          status: HttpStatus.NOT_FOUND,
+          status: 'error',
+          message: `Event not found or has been deleted.`,
+          payload: [{ id }],
         });
       }
 
-      return isEvent;
+      return { status: 'success', payload: [isEvent] };
     } catch (err) {
+      if (err instanceof RpcException) throw err;
+
       throw new RpcException({
-        message: 'Failed to find event. Please try again.',
         status: HttpStatus.BAD_REQUEST,
+        message: 'Something went wrong.',
       });
     }
   };
 
   findAllById = async (paginationDto: PaginationDto) => {
-    const { id, page, limit, sort } = paginationDto;
+    const { id: userId, page, limit, sort } = paginationDto;
 
     try {
-      const docs: number = await this.event.count();
+      const docs: number = await this.event.count({
+        where: { isDeleted: false },
+      });
 
       const skipValue = (page - 1) * limit;
 
@@ -74,61 +81,74 @@ export class EventService extends PrismaClient implements OnModuleInit {
         take: limit,
         skip: skipValue,
         orderBy: { createdAt: sort },
-        where: { userId: id },
+        where: { userId: userId, isDeleted: false },
       });
 
       const paginationResults: PaginationResultsProps = executePagination({
         page,
         limit,
         sort,
-        endpointName: 'events',
+        endpointName: 'event',
         docs,
         items: events,
       });
 
       return paginationResults;
     } catch (err) {
+      if (err instanceof RpcException) throw err;
+
       throw new RpcException({
-        message: 'Failed to find events. Please try again.',
         status: HttpStatus.BAD_REQUEST,
+        message: 'Something went wrong.',
       });
     }
   };
 
-  update = async (id: string, updateEventDto: UpdateEventDto) => {
+  update = async (updateEventDto: UpdateEventDto) => {
+    const { id, ...updateData } = updateEventDto;
     try {
       await this.findOne(id);
 
       const payload = await this.event.update({
-        where: { id: id },
-        data: updateEventDto,
+        where: { id: id, isDeleted: false },
+        data: updateData,
       });
 
-      return payload;
+      if (!payload) {
+        throw new RpcException({
+          status: 'error',
+          message: `Event not active`,
+          payload: [{ id }],
+        });
+      }
+
+      return { status: 'success', payload: [payload] };
     } catch (err) {
+      if (err instanceof RpcException) throw err;
+
       throw new RpcException({
-        message: 'Failed to update event. Please try again.',
         status: HttpStatus.BAD_REQUEST,
+        message: 'Something went wrong.',
       });
     }
   };
 
   remove = async (id: string) => {
     try {
-      await this.event.findUnique({
-        where: { id: id },
-      });
+      await this.findOne(id);
 
       const payload = await this.event.update({
         where: { id: id },
-        data: { isDeleted: true },
+        data: { isDeleted: true, isActive: false },
       });
 
-      return payload;
+      return { status: 'success', payload: [payload] };
     } catch (err) {
+      if (err instanceof RpcException) throw err;
+
       throw new RpcException({
-        message: 'Failed to remove event. Please try again.',
         status: HttpStatus.BAD_REQUEST,
+        message: 'Something went wrong.',
       });
     }
   };
