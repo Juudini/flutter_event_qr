@@ -27,36 +27,36 @@ export class QrsService extends PrismaClient implements OnModuleInit {
 
   onModuleInit() {
     this.$connect();
-    this.logger.log('Database connected');
+    this.logger.log('📚 Database connected');
   }
 
   verifyQr = async (ids: VerifyQrDto) => {
     const { id, userId, eventId } = ids;
     try {
-      const qrCode = await this.findOne(id);
+      const qrCode = (await this.findOne(id)).payload[0];
 
       if (qrCode.userId !== userId) {
         throw new RpcException({
-          status: HttpStatus.BAD_REQUEST,
+          status: 'error',
           message: `QR is not valid`,
           payload: [{ id, userId, eventId }],
         });
       }
 
-      const eventData: any = await this.client.send(
-        'find.event.by.id',
-        eventId,
-      );
+      const isEvent: any = await this.client.send('find.event.by.id', eventId);
 
-      if (eventData?.eventId !== eventId) {
+      if (isEvent?.eventId !== eventId) {
         throw new RpcException({
-          status: HttpStatus.BAD_REQUEST,
+          status: 'error',
           message: `QR is not valid`,
           payload: [{ id, userId, eventId }],
         });
       }
 
-      return { payload: { userId, eventId, eventData } };
+      return {
+        status: 'success',
+        payload: [{ id, userId, eventId }],
+      };
     } catch (err) {
       if (err instanceof RpcException) throw err;
 
@@ -77,7 +77,7 @@ export class QrsService extends PrismaClient implements OnModuleInit {
 
       if (existQr) {
         throw new RpcException({
-          status: HttpStatus.BAD_REQUEST,
+          status: 'error',
           message: `QR for event already exists`,
           payload: [{ userId, eventId }],
         });
@@ -98,7 +98,7 @@ export class QrsService extends PrismaClient implements OnModuleInit {
         },
       });
 
-      return { status: 'success', payload };
+      return { status: 'success', payload: [payload] };
     } catch (err) {
       if (err instanceof RpcException) throw err;
 
@@ -111,19 +111,19 @@ export class QrsService extends PrismaClient implements OnModuleInit {
 
   findOne = async (id: string) => {
     try {
-      const eventQr = await this.qrCode.findUnique({
+      const isEventQr = await this.qrCode.findUnique({
         where: { id: id, isActive: true },
       });
 
-      if (!eventQr) {
+      if (!isEventQr) {
         throw new RpcException({
-          status: HttpStatus.BAD_REQUEST,
+          status: 'error',
           message: `QR not found or has been deleted.`,
           payload: [{ id }],
         });
       }
 
-      return eventQr;
+      return { status: 'success', payload: [isEventQr] };
     } catch (err) {
       if (err instanceof RpcException) throw err;
 
@@ -178,7 +178,7 @@ export class QrsService extends PrismaClient implements OnModuleInit {
         data: { isActive: false },
       });
 
-      return payload;
+      return { status: 'success', payload: [payload] };
     } catch (err) {
       if (err instanceof RpcException) throw err;
 
