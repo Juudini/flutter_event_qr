@@ -19,8 +19,10 @@ export const executePagination = ({
 }: ExecutePaginationProps) => {
   const baseUrl: string = `/api/${endpointName}?limit=${limit}&sort=${sort}`;
 
+  const totalPages: number = Math.ceil(docs / limit);
+
   const hasPrevPage: boolean = page > 1;
-  const hasNextPage: boolean = page < docs;
+  const hasNextPage: boolean = page < totalPages;
 
   const prevPage: number | null = hasPrevPage ? page - 1 : null;
   const nextPage: number | null = hasNextPage ? page + 1 : null;
@@ -31,8 +33,6 @@ export const executePagination = ({
   const nextLink: string | null = hasNextPage
     ? `${baseUrl}&page=${nextPage}`
     : null;
-
-  const totalPages: number = Math.ceil(docs / limit);
 
   const results = {
     status,
@@ -49,7 +49,6 @@ export const executePagination = ({
   };
 
   if (page >= totalPages) {
-    results.hasNextPage = false;
     results.nextPage = null;
     results.nextLink = null;
   }
