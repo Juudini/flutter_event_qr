@@ -6,6 +6,9 @@ export class SignupUserDto {
   name: string;
 
   @IsString()
+  lastName: string;
+
+  @IsString()
   @IsEmail()
   email: string;
 
@@ -14,7 +17,7 @@ export class SignupUserDto {
   password: string;
 
   @IsEnum(RoleList, {
-    message: `Valid roles are: ${RoleList.map(role => role).join(', ')}`,
+    message: 'Invalid role.',
   })
   role: Role;
 }
